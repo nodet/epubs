@@ -71,7 +71,7 @@ echo "output-encoding: utf-8" >> tidy2.conf
 
 cat >quotes.sed <<EOF
 #----------------------------------------------------------------------
-# proper_quotes_nonwin.sed
+# proper_quotes_win.sed
 # Copyright Stephen Poley.  May be freely used for non-commercial purposes.
 # http://www.xs4all.nl/~sbpoley/
 #----------------------------------------------------------------------
@@ -81,17 +81,18 @@ cat >quotes.sed <<EOF
 # characters. It also replaces numeric character references
 # with character entity references for consistency.
 #
-# Non-Windows version: line-feed terminators 
+# Windows version: also tidies up the dubious Windows versions of these
+# characters (and a few others).
 #
-# Any quotes which must not be changed can be represented by &#39; (single) or 
+# Any quotes which must not be changed can be represented by &#39; (single) or
 # &#34; or &quot; (double).
 #
-# A few characters will be left unchanged in situations where it is hard to 
-# determine if a left or right quotation mark is appropriate.
+# A few characters will be left unchanged in situations where it is hard to
+# be sure if a left or right quotation mark is appropriate.
 #
 # Running a file through this script multiple times should produce the same
 # result as running it once; it doesn't matter if a file has already been fully
-# or partially converted to proper quotation marks. 
+# or partially converted to proper quotation marks.
 #
 # Restrictions:
 # 1) Doesn't recognise multi-line HTML comments, so any quotes in such
@@ -102,8 +103,8 @@ cat >quotes.sed <<EOF
 #    are handled OK provided the <HEAD> and </HEAD> tags are present.
 #
 # Last updates: 
-#   29-9-2003, handle multi-line Meta's
 #   1-4-2006, handle digit-quote-punctuation sequence
+#  14-4-2006, handle some extra cases
 #----------------------------------------------------------------------
 
 # skip DOCTYPE
@@ -129,33 +130,10 @@ b endscr
 }
 x
 
-s/«/\&laquo;/g    
-s/»/\&raquo;/g
-s/“/\&ldquo;/g
-s/”/\&rdquo;/g
-s/‹/\&lsaquo;/g
-s/›/\&rsaquo;/g
-s/„/\&bdquo;/g
-s/“/\&ldquo;/g
-s/‚/\&sbquo;/g
-s/‘/\&lsquo;/g
-s//\&rsquo;/g
-#s/\&#39;/\&rsquo;/g  
-#s/\&#171;/\&laquo;/g        
-#s/\&#187;/\&raquo;/g        
-#s/\&#156;/\&oelig;/g   
-#s/\&#151;/\&ndash;/g    
-#s/\&#339;/\&oelig;/g   
-#s/í/\&rsquo;/g
-#s/ó/\&ndash;/g 
-#s/ñ/\&ndash;/g 
-s//\&oelig;/g
-#s/ú/\&oelig;/g
-
 # replace any degree characters, so can use them temporarily
 s/°/\&deg;/g
 
-# temporarily replace quotes in attributes and comments 
+# temporarily replace quotes in attributes and comments
 s/="\([^"]*\)"/=°\1°/g
 : commdq
 s/\(<!--[^>]*\)"\([^>]*>\)/\1°\2/g
@@ -168,13 +146,14 @@ s/ "\([^ ]\)/ \&ldquo;\1/g
 s/^"\([^ ]\)/\&ldquo;\1/
 s/\([^ ]\)" /\1\&rdquo; /g
 s/\([^ ]\)"$/\1\&rdquo;/
-s/\([^ ]\)"\([ ;,:.]\)/\1\&rdquo;\2/g
 # digit-quote-punctuation sequence
 s/\([0-9]\)"\([;,:.]\)/\1\&rdquo;\2/g
-                  
-: innerquotes
-s/\(\&laquo;.*\)\&quot;\(.*\)\&quot;\(.*\&raquo;\)/\1\&ldquo;\2\&rdquo;\3/g
-t innerquotes
+# sentence-end - quote - tag
+s/\([.?!]\)"</\1\&rdquo;</g
+# sentence-end - quote - closing parenthesis
+s/\([.?!]\)")/\1\&rdquo;)/g
+# closing parenthesis - quote - sentence-end
+s/)"\([.?!]\)/)\&rdquo;\1/g
 
 # put attribute quotes back
 s/°/"/g
@@ -192,16 +171,32 @@ s/\([^ ]\)'$/\1\&rsquo;/
 s/ '\([^ ]\)/ \&lsquo;\1/g
 s/^'\([^ ]\)/\&lsquo;\1/
 s/\([0-9]\)'\([;,:.]\)/\1\&rsquo;\2/g
+s/\([.?!]\)'</\1\&rsquo;</g
+s/\([.?!]\)')/\1\&rsquo;)/g
+s/)'\([.?!]\)/)\&rsquo;\1/g
+
 s/°/'/g
 
-# dashes: 
+# dashes:
 # - replace a hyphen surrounded by spaces with an en-dash;
 # - replace a double hyphen which isn't part of an HTML comment delimiter
 #   with an em-dash.
 s/ - / \&ndash; /g
-s/\(.\)_ /\1\&ndash; /g
-s/ _\(.\)/ \&ndash;\1/g
 s/\([^-!]\)[ ]*--[ ]*\([^->]\)/\1\&mdash;\2/g
+
+# Mend the commoner dubious Windows characters
+# (range 128-159 - these are undefined in HTML)
+s/“/\&ldquo;/g
+s/”/\&rdquo;/g
+s/‘/\&lsquo;/g
+s/’/\&rsquo;/g
+s/–/\&ndash;/g
+s/—/\&mdash;/g
+
+s/€/\&euro;/g
+s/…/\&hellip;/g
+s/˜/\&tilde;/g
+s/†/\&dagger;/g
 
 # And finally tidy up any numerical character references for consistency
 s/\&#8211;/\&ndash;/g
@@ -210,67 +205,8 @@ s/\&#8216;/\&lsquo;/g
 s/\&#8217;/\&rsquo;/g
 s/\&#8220;/\&ldquo;/g
 s/\&#8221;/\&rdquo;/g
+
 : endscr
-                               
-
-EOF
-
-cat >whitespaces.sed <<EOF
-# Fix whitespaces   
-/<body/,/<\/body>/ {
-
-  # Fix ellipsis
-  s/\.\.\./\&hellip;/g
-
-  s/\&laquo;\([[:graph:]]\)/\&laquo;\&nbsp;\1/g
-  s/\([[:graph:]]\)\&raquo;/\1\&nbsp;\&raquo;/g
-  s/\&raquo;/\&nbsp;\&raquo;/g
-  s/\([[:graph:]]\)<\/i>\&raquo;/\1<\/i>\&nbsp;\&raquo;/g
-  s/\([[:graph:]]\)\.\([[:graph:]]\)/\1. \2/g
-  s/\([[:graph:]]\):/\1\&nbsp;:/g
-  s/\([[:graph:]]\),\([[:graph:]]\)/\1, \2/g
-  s/\&laquo; /\&laquo;\&nbsp;/g
-  s/ \&raquo;/\&nbsp;\&raquo;/g
-  s/\&ldquo; /\&ldquo;\&nbsp;/g
-  s/ \&rdquo;/\&nbsp;\&rdquo;/g
-  s/\&lsaquo; /\&lsaquo;\&nbsp;/g
-  s/ \&rsaquo;/\&nbsp;\&rsaquo;/g
-  s/\&bdquo; /\&bdquo;\&nbsp;/g
-  s/ \&ldquo;/\&nbsp;\&ldquo;/g
-  s/\&sbquo; /\&sbquo;\&nbsp;/g
-  s/ \&lsquo;/\&nbsp;\&lsquo;/g  
-  s/\([A-Za-z)>]\)\.\([A-Za-z]\)/\1. \2/g
-  s/\([^\s]\): /\1\&nbsp;: /g               
-  s/\([^\s]\)!/\1\&nbsp;!/g
-  s/\([^\s]\)\?/\1\&nbsp;?/g
-  s/ : /\&nbsp;: /g             
-  s/\([^\s]\):/\1\&nbsp;:/g  
-  s/\([ ;][^\& ]*\); /\1\&nbsp;; /g                  
-  s/\([ ;][^\& ]*\);\([[:graph:]]\)/\1\&nbsp;; \2/g                  
-  s/\([ ;][^\& ]*\): /\1\&nbsp;: /g                  
-  s/\([ ;][^\& ]*\):\([[:graph:]]\)/\1\&nbsp;: \2/g                  
-  s/\([[:graph:]]\)!/\1\&nbsp;!/g
-  s/\([[:graph:]]\)\?/\1\&nbsp;?/g
-  s/\([A-Za-z]\)\?\&nbsp;/\1\&nbsp;?\&nbsp;/g   
-  s/\([[:graph:]]\)<i>/\1 <i>/g
-  s/( /(/g
-  s/ )/)/g
-  s/\([[:graph:]]\)- /\1 \&ndash; /g
-  s/ -\([[:graph:]]\)/ \&ndash; \1/g
-  s/ ,/,/g                                         
-  s/\&rsquo; /\&rsquo;/g
-  
-  s/\( *\&nbsp; *\)\( *\&nbsp; *\)*/\&nbsp;/g
-
-  # Fix wrongly modified href
-  :l0
-  s/\(="[^"]*\)\&nbsp;\([^"]*"\)/\1\2/g
-  t l0
-  :l1
-  s/\(="[^"]*\) \([^"]*"\)/\1\2/g
-  t l1
-}  
-
 EOF
 
 cd out
