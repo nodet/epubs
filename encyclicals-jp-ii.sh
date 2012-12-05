@@ -477,12 +477,12 @@ EOF
 cat >../enc-index.xsl <<"EOF"
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-<xsl:output encoding="us-ascii"/>
+<xsl:output encoding="UTF-8"/>
 <xsl:key name="author" match="///book" use="@creator"/>	
 <xsl:template match="/">
   <html>              
 	<head>
-	  <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+	  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	  <title>Lettres encycliques</title>
 	  <link href="../stylesheet.css" type="text/css" rel="stylesheet"/>
 	  <link href="../page_styles.css" type="text/css" rel="stylesheet"/>
@@ -642,3 +642,5 @@ cp $OUTPUT ../..
 
 
 
+cd ../..
+java -jar epubcheck-3.0-RC-1/epubcheck-3.0-RC-1.jar vatican-ii/out/Concile-Vatican-II.epub
