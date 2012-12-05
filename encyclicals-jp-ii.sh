@@ -79,7 +79,7 @@ fi
 echo "preserve-entities: yes" > tidy1.conf 
 echo "preserve-entities: no" > tidy2.conf 
 echo "input-encoding: latin1" >> tidy2.conf
-echo "output-encoding: utf-8" >> tidy2.conf   
+echo "output-encoding: utf8" >> tidy2.conf   
 
 cat >quotes.sed <<EOF
 #----------------------------------------------------------------------
@@ -477,12 +477,12 @@ EOF
 cat >../enc-index.xsl <<"EOF"
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-<xsl:output encoding="UTF-8"/>
+<xsl:output encoding="us-ascii"/>
 <xsl:key name="author" match="///book" use="@creator"/>	
 <xsl:template match="/">
   <html>              
 	<head>
-	  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	  <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 	  <title>Lettres encycliques</title>
 	  <link href="../stylesheet.css" type="text/css" rel="stylesheet"/>
 	  <link href="../page_styles.css" type="text/css" rel="stylesheet"/>
@@ -547,7 +547,7 @@ cat >../enc-index.xsl <<"EOF"
 EOF
 xsltproc ../enc-index.xsl OEBPS/index.xml > OEBPS/index.html 2> /dev/null
 rm OEBPS/index.xml
-tidy -asxml -i -n -c -m -w 1024  OEBPS/index.html 2> /dev/null
+tidy -config ../tidy2.conf -asxml -i -n -c -m -w 1024  OEBPS/index.html 2> /dev/null
 
 cat >content.opf <<EOF                                         
 <?xml version='1.0' encoding='utf-8'?>
