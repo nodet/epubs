@@ -258,7 +258,7 @@ cat >../doc-index.xsl <<"EOF"
 </xsl:template>                             
 </xsl:stylesheet>
 EOF
-xsltproc ../doc-index.xsl index.xml > index.html 2> /dev/null
+xsltproc ../doc-index.xsl index.xml > index.html
 rm index.xml
 
 for FILE in *.html
@@ -286,8 +286,8 @@ do
 	  $text =~ s/ xml:lang="fr"//g; 
 	  $text =~ s/\x92/\&rsquo;/g;
 	  $text =~ s/\x96/\&ndash;/g;
-	  print $text;' $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp
-  tidy -config ../tidy1.conf -asxml -i -n -c -m -w 9999 -latin1 $FILE 2> /dev/null
+	  print $text;' $FILE > $FILE.tmp1 ; cp $FILE.tmp1 $FILE
+  tidy -config ../tidy1.conf -asxml -i -n -c -m -w 9999 -latin1 $FILE
   perl -e '
       # Load file
       $file = $ARGV[0];  local( *FH ) ;  open( FH, $file ); my $text = do { local( $/ ) ; <FH> } ; 
@@ -330,11 +330,11 @@ do
 	  $text =~ s/<!\[endif\]>//g;
 	  $text =~ s/ encoding="iso-8859-1"//g;
 	  $text =~ s/(<a[^>]*) name="[^"]*"/\1/g;
-	  print $text;' $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp              
-  iconv -f ISO-8859-1 -t UTF-8 $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp
-  sed -f ../quotes.sed $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp 
-  sed -f ../whitespaces.sed $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp 
-  iconv -t ISO-8859-1 -f UTF-8 $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp
+	  print $text;' $FILE > $FILE.tmp2 ; cp $FILE.tmp2 $FILE              
+  iconv -f ISO-8859-1 -t UTF-8 $FILE > $FILE.tmp3 ; cp $FILE.tmp3 $FILE
+  sed -f ../quotes.sed $FILE > $FILE.tmp4 ; cp $FILE.tmp4 $FILE
+  sed -f ../whitespaces.sed $FILE > $FILE.tmp5 ; cp $FILE.tmp5 $FILE
+  iconv -t ISO-8859-1 -f UTF-8 $FILE > $FILE.tmp6 ; cp $FILE.tmp6 $FILE
   perl -e '                                                                                
       # Load file
       $file = $ARGV[0];  local( *FH ) ;  open( FH, $file ); my $text = do { local( $/ ) ; <FH> } ; 
@@ -358,15 +358,15 @@ do
 	  $text =~ s/\. *(<a [^>]*>[0-9]*<\/a>)/$1\./g;
 	  $text =~ s/, *(<a [^>]*>[0-9]*<\/a>)/$1,/g;
 	  $text =~ s/(<a href=[^>]*>[0-9]*<\/a>)/<span class="footnote"><sup>$1<\/sup><\/span>/g;
-	  print $text;' $FILE > $FILE.tmp ; cp $FILE.tmp $FILE ; rm $FILE.tmp
-  tidy -config ../tidy2.conf -asxml -i -n -c -m -w 9999 $FILE 2> /dev/null
+	  print $text;' $FILE > $FILE.tmp7 ; cp $FILE.tmp7 $FILE
+  tidy -config ../tidy2.conf -asxml -i -n -c -m -w 9999 $FILE
 done
                                          
-mkdir OEBPS 2>/dev/null   
+mkdir OEBPS 
 rm -f OEBPS/*
 mv *.html OEBPS
 echo -n "application/epub+zip" > mimetype
-mkdir META-INF 2>/dev/null
+mkdir META-INF
 cat > META-INF/container.xml <<EOF
 <?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -419,7 +419,7 @@ then
     </text>
 </svg>
 EOF
-  java -jar ../../batik-1.7/batik-rasterizer.jar -m image/jpeg -q 0.9 cover.svg > /dev/null
+  java -jar ../../batik-1.7/batik-rasterizer.jar -m image/jpeg -q 0.9 cover.svg
   rm cover.svg                                                             
   mv cover.jpg cover.jpeg
 fi
